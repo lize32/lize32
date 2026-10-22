@@ -1,0 +1,1049 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>습관 키우기 달력</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts (Noto Sans KR) -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background-color: #f3f4f6;
+            -webkit-tap-highlight-color: transparent;
+        }
+        /* Mobile Frame Simulator Style */
+        .mobile-container {
+            max-width: 430px;
+            min-height: 100vh;
+            margin: 0 auto;
+            background: #ffffff;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+        }
+        /* Hide scrollbars for clean mobile feel */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        /* Tree Animation Pulse */
+        @keyframes treeGlow {
+            0%, 100% { transform: scale(1); filter: drop-shadow(0 0 8px rgba(16, 185, 129, 0.4)); }
+            50% { transform: scale(1.03); filter: drop-shadow(0 0 18px rgba(16, 185, 129, 0.7)); }
+        }
+        .tree-anim {
+            animation: treeGlow 3s infinite ease-in-out;
+        }
+
+        /* Floating Click Effect Animation */
+        @keyframes floatUp {
+            0% { opacity: 1; transform: translateY(0) scale(1); }
+            100% { opacity: 0; transform: translateY(-40px) scale(1.2); }
+        }
+        .click-pop {
+            position: absolute;
+            animation: floatUp 0.8s ease-out forwards;
+            pointer-events: none;
+            font-weight: bold;
+            color: #10b981;
+            font-size: 14px;
+            z-index: 50;
+        }
+
+        /* Custom Background themes */
+        .bg-theme-field { background: linear-gradient(180deg, #e0f2fe 0%, #dcfce7 60%, #86efac 100%); }
+        .bg-theme-night { background: linear-gradient(180deg, #0f172a 0%, #1e1b4b 60%, #312e81 100%); color: white; }
+        .bg-theme-sunset { background: linear-gradient(180deg, #fef3c7 0%, #fde68a 30%, #fca5a5 70%, #f43f5e 100%); }
+        .bg-theme-galaxy { background: linear-gradient(180deg, #2e1065 0%, #3b0764 50%, #581c87 100%); color: white; }
+        
+        /* New Animated Rich Themes */
+        .bg-theme-ocean { background: linear-gradient(180deg, #bae6fd 0%, #38bdf8 45%, #0284c7 75%, #0369a1 100%); color: white; }
+        .bg-theme-sakura { background: linear-gradient(180deg, #fce7f3 0%, #fbcfe8 50%, #f472b6 100%); }
+        .bg-theme-forest { background: linear-gradient(180deg, #dcfce7 0%, #15803d 60%, #064e3b 100%); color: white; }
+        .bg-theme-aurora { background: linear-gradient(180deg, #052e16 0%, #065f46 40%, #0284c7 75%, #312e81 100%); color: white; }
+
+        /* Animated Decor Elements */
+        @keyframes flyBird {
+            0% { transform: translateX(-40px) translateY(0px) scale(0.8); opacity: 0; }
+            20% { opacity: 1; }
+            80% { opacity: 1; }
+            100% { transform: translateX(380px) translateY(-30px) scale(1); opacity: 0; }
+        }
+        .anim-bird-1 { animation: flyBird 12s infinite linear; }
+        .anim-bird-2 { animation: flyBird 16s infinite linear 5s; }
+
+        @keyframes waveMotion {
+            0%, 100% { transform: translateY(0px) scaleY(1); }
+            50% { transform: translateY(4px) scaleY(1.08); }
+        }
+        .anim-wave { animation: waveMotion 4s ease-in-out infinite; }
+
+        @keyframes floatPetal {
+            0% { transform: translateY(-10px) rotate(0deg); opacity: 0.9; }
+            100% { transform: translateY(280px) rotate(360deg); opacity: 0.1; }
+        }
+        .anim-petal {
+            position: absolute;
+            top: -10px;
+            pointer-events: none;
+            animation: floatPetal linear infinite;
+        }
+
+        /* Preview Banner Styling */
+        .preview-badge {
+            animation: pulse 1.5s infinite;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen flex items-center justify-center">
+
+    <!-- Mobile Viewport Outer -->
+    <div class="mobile-container w-full min-h-screen pb-24">
+
+        <!-- Top App Bar -->
+        <header class="sticky top-0 z-20 bg-white/90 backdrop-blur-md px-5 py-3 border-b border-gray-100 flex items-center justify-between">
+            <div class="flex items-center space-x-2 cursor-pointer" id="appHeaderLogo">
+                <div class="w-8 h-8 rounded-full bg-emerald-500 flex items-center justify-center text-white font-bold text-sm">
+                    🌱
+                </div>
+                <span class="font-bold text-gray-800 text-lg tracking-tight">습관 키우기</span>
+            </div>
+            
+            <!-- Coin & Rate Badge -->
+            <div class="flex items-center space-x-2">
+                <div class="flex items-center bg-amber-50 px-3 py-1 rounded-full border border-amber-200">
+                    <i class="fa-solid fa-coins text-amber-500 mr-1.5 text-xs"></i>
+                    <span id="userCoins" class="font-bold text-xs text-amber-700">0</span>
+                    <span id="cpsRateText" class="text-[10px] text-amber-600 ml-1 font-semibold">(+0/초)</span>
+                </div>
+                <button id="openHabitModalBtn" class="text-xs bg-emerald-600 text-white font-medium px-2.5 py-1.5 rounded-full hover:bg-emerald-700 transition active:scale-95">
+                    + 습관
+                </button>
+            </div>
+        </header>
+
+        <!-- VIEW 1: CALENDAR TAB PAGE -->
+        <main id="tabCalendarView" class="block">
+            <!-- Monthly Character Cheer Card -->
+            <section class="m-4 p-4 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-600 text-white shadow-lg relative overflow-hidden">
+                <div class="absolute -right-4 -bottom-4 opacity-20 text-8xl">
+                    <i class="fa-solid fa-face-smile-beam"></i>
+                </div>
+                <div class="flex items-start space-x-3.5 relative z-10">
+                    <!-- Character Avatar -->
+                    <div class="w-14 h-14 rounded-2xl bg-white/20 backdrop-blur-md flex-shrink-0 flex items-center justify-center text-3xl shadow-inner border border-white/30" id="charAvatar">
+                        🦊
+                    </div>
+                    <div>
+                        <div class="flex items-center space-x-2">
+                            <span id="charName" class="font-bold text-sm bg-white/20 px-2 py-0.5 rounded-md">응원 요정 루키</span>
+                            <span class="text-xs text-emerald-100" id="currentMonthText">10월의 메시지</span>
+                        </div>
+                        <p id="charQuote" class="text-xs text-emerald-50 mt-1.5 leading-relaxed font-medium">
+                            "오늘 작은 한 걸음이 내일의 커다란 꿈을 완성해! 오늘도 화이팅이야!"
+                        </p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Selected Day's Task & History Card -->
+            <section class="mx-4 mb-4 p-4 rounded-2xl bg-white border border-gray-100 shadow-sm">
+                <div class="flex items-center justify-between mb-2">
+                    <div class="flex items-center space-x-2">
+                        <span id="selectedDatePulse" class="inline-block w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
+                        <h2 class="text-sm font-bold text-gray-800" id="selectedTaskHeaderTitle">오늘의 할 일</h2>
+                    </div>
+                    <span id="todayDateText" class="text-xs font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-md">10월 22일</span>
+                </div>
+
+                <div id="noHabitNotice" class="text-center py-4 text-gray-400 text-xs">
+                    <i class="fa-regular fa-calendar-plus text-2xl mb-1 text-gray-300 block"></i>
+                    설정된 습관이 없습니다. 상단 [+ 습관] 버튼을 통해 새로 시작해보세요!
+                </div>
+
+                <div id="todayTaskContainer" class="hidden">
+                    <div class="bg-gray-50 p-3 rounded-xl border border-gray-100 flex items-center justify-between">
+                        <div class="pr-2">
+                            <span id="taskHabitName" class="text-xs font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-md">매일 운동하기</span>
+                            <p id="taskDescription" class="text-sm font-bold text-gray-700 mt-1">1일차: 가볍게 스트레칭 5분 하기</p>
+                        </div>
+                        <button id="completeTaskBtn" class="bg-emerald-500 hover:bg-emerald-600 active:scale-95 text-white font-bold text-xs px-4 py-2.5 rounded-xl shadow-md transition flex items-center space-x-1 shrink-0">
+                            <i class="fa-solid fa-check"></i>
+                            <span>완료</span>
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Calendar Grid Card -->
+            <section class="mx-4 mb-4 p-4 rounded-2xl bg-white border border-gray-100 shadow-sm">
+                <!-- Month Header Nav -->
+                <div class="flex items-center justify-between mb-4">
+                    <button id="prevMonthBtn" class="w-8 h-8 rounded-full hover:bg-gray-100 flex items-center justify-center text-gray-600 transition active:scale-90">
+                        <i class="fa-solid fa-chevron-left text-xs"></i>
+                    </button>
+                    <h3 id="calendarMonthYear" class="font-bold text-gray-800 text-base">2026년 10월</h3>
+                    <button id="nextMonthBtn" class="w-8 h-8 rounded-full hover:bg-gray-100 flex items-center justify-center text-gray-600 transition active:scale-90">
+                        <i class="fa-solid fa-chevron-right text-xs"></i>
+                    </button>
+                </div>
+
+                <!-- Days of Week Header -->
+                <div class="grid grid-cols-7 gap-1 text-center text-xs font-bold text-gray-400 mb-2">
+                    <span class="text-rose-400">일</span>
+                    <span>월</span>
+                    <span>화</span>
+                    <span>수</span>
+                    <span>목</span>
+                    <span>금</span>
+                    <span class="text-indigo-400">토</span>
+                </div>
+
+                <!-- Calendar Days Grid -->
+                <div id="calendarDaysGrid" class="grid grid-cols-7 gap-1.5 text-center text-xs">
+                    <!-- Dynamically populated by JS -->
+                </div>
+            </section>
+        </main>
+
+        <!-- VIEW 2: FULL TREE GARDEN PAGE (IDLE GAME) -->
+        <main id="tabGardenView" class="hidden flex-1 flex flex-col relative">
+            
+            <!-- Garden Tree Display Section -->
+            <div id="gardenCanvasArea" class="mx-4 mt-2 p-6 rounded-3xl bg-theme-field transition-all duration-500 shadow-lg relative flex flex-col items-center justify-between min-h-[380px] overflow-hidden select-none cursor-pointer">
+                
+                <!-- Background Animated Elements Layer -->
+                <div id="themeAnimDecor" class="absolute inset-0 pointer-events-none overflow-hidden">
+                    <!-- Dynamic Birds, Waves, Petals injected here -->
+                </div>
+
+                <!-- Preview Mode Top Notification Bar -->
+                <div id="previewBanner" class="absolute top-0 left-0 right-0 bg-amber-500 text-white text-[11px] font-bold py-1.5 px-3 flex items-center justify-between z-20 hidden shadow-md">
+                    <span class="flex items-center"><i class="fa-solid fa-eye mr-1.5 text-xs"></i> <span id="previewNameText">배경 체험 중</span></span>
+                    <div class="space-x-1">
+                        <button id="cancelPreviewBtn" class="bg-white/20 hover:bg-white/30 active:scale-95 px-2 py-0.5 rounded text-[10px]">체험 종료</button>
+                        <button id="buyFromPreviewBtn" class="bg-white text-amber-800 active:scale-95 px-2 py-0.5 rounded text-[10px] font-bold">바로 구매</button>
+                    </div>
+                </div>
+
+                <!-- Background Decor Stage Badge -->
+                <div class="absolute top-4 left-4 text-xs font-bold bg-white/70 backdrop-blur-md px-3 py-1 rounded-full text-emerald-800 shadow-sm z-10">
+                    <span id="treeStageLabel">단계 1: 작은 씨앗</span>
+                </div>
+                <div class="absolute top-4 right-4 text-xs font-semibold bg-white/70 backdrop-blur-md px-3 py-1 rounded-full text-gray-700 shadow-sm z-10">
+                    👆 터치: +1 🪙
+                </div>
+
+                <!-- Main Full Tree Visual -->
+                <div id="mainTreeInteractive" class="my-auto relative flex flex-col items-center justify-center transition-transform active:scale-90 duration-100 z-10 py-6">
+                    <div id="treeIconDisplay" class="text-8xl md:text-9xl tree-anim drop-shadow-2xl">
+                        🌱
+                    </div>
+                </div>
+
+                <!-- Progress & Stats Area -->
+                <div class="w-full bg-white/80 backdrop-blur-md p-3.5 rounded-2xl shadow-md border border-white/40 z-10">
+                    <div class="flex justify-between items-center text-xs font-bold text-gray-700 mb-1.5">
+                        <span>성장 진행률</span>
+                        <span id="treeExpText">0 / 30 EXP</span>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
+                        <div id="gardenProgressBar" class="bg-gradient-to-r from-emerald-400 to-teal-500 h-3 rounded-full transition-all duration-300" style="width: 0%"></div>
+                    </div>
+                    <p id="gardenStatusMessage" class="text-[11px] text-gray-500 mt-2 text-center font-medium">
+                        나무를 터치하거나 농부를 고용해 자동으로 경험치를 채워보세요!
+                    </p>
+                </div>
+            </div>
+
+            <!-- Idle Helpers & Background Shop Section -->
+            <section class="mx-4 mt-4 mb-4">
+                <!-- Sub Menu Navigation Buttons -->
+                <div class="flex space-x-2 mb-3">
+                    <button id="showFarmersTabBtn" class="flex-1 py-2 bg-emerald-600 text-white font-bold text-xs rounded-xl shadow-sm active:scale-95 transition">
+                        👨‍🌾 농부 고용 (자동)
+                    </button>
+                    <button id="showThemesTabBtn" class="flex-1 py-2 bg-gray-100 text-gray-600 font-bold text-xs rounded-xl hover:bg-gray-200 active:scale-95 transition">
+                        🖼️ 배경 상점 (<span id="themeCountBadge">8</span>)
+                    </button>
+                </div>
+
+                <!-- Farmers / Helper List -->
+                <div id="farmersPanel" class="space-y-2.5">
+                    <!-- Dynamic Helper Items injected via JS -->
+                </div>
+
+                <!-- Themes Panel (Hidden by default) -->
+                <div id="themesPanel" class="hidden grid grid-cols-2 gap-2.5">
+                    <!-- Dynamic Theme Items injected via JS -->
+                </div>
+            </section>
+        </main>
+
+        <!-- Bottom Fixed Navigation Bar -->
+        <nav class="fixed bottom-0 left-0 right-0 max-w-[430px] mx-auto bg-white/95 backdrop-blur-md border-t border-gray-100 px-6 py-2 flex justify-around items-center z-30">
+            <button id="navCalendarBtn" class="flex flex-col items-center text-emerald-600 font-bold transition active:scale-95">
+                <i class="fa-solid fa-calendar-days text-lg"></i>
+                <span class="text-[10px] mt-0.5">습관 달력</span>
+            </button>
+            <button id="navGardenBtn" class="flex flex-col items-center text-gray-400 font-medium hover:text-emerald-600 transition active:scale-95">
+                <i class="fa-solid fa-tree text-lg"></i>
+                <span class="text-[10px] mt-0.5">나무 정원</span>
+            </button>
+        </nav>
+
+        <!-- New Habit Creation Modal -->
+        <div id="habitModal" class="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center px-4 hidden">
+            <div class="bg-white rounded-3xl p-6 w-full max-w-sm shadow-2xl transition-all">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-base font-bold text-gray-800">새 습관 설정하기</h3>
+                    <button id="closeHabitModalBtn" class="text-gray-400 hover:text-gray-600 text-lg">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-600 mb-1">만들고 싶은 습관</label>
+                        <input type="text" id="habitTitleInput" placeholder="예: 매일 책 10페이지 읽기, 코딩 공부" class="w-full border border-gray-200 rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-emerald-500 outline-none">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-gray-600 mb-1">목표 달성 기간</label>
+                        <select id="habitDurationInput" class="w-full border border-gray-200 rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-emerald-500 outline-none">
+                            <option value="7">7일 (단기 집중 습관)</option>
+                            <option value="14">14일 (2주 완성 습관)</option>
+                            <option value="21" selected>21일 (습관 형성 기본)</option>
+                            <option value="30">30일 (한 달 정복 습관)</option>
+                        </select>
+                    </div>
+
+                    <p class="text-[11px] text-gray-400 leading-relaxed bg-gray-50 p-2.5 rounded-xl border border-gray-100">
+                        💡 달력이 자동으로 날마다 적절한 난이도의 미션을 부여해 드립니다. 미션 완료 및 농부 고용으로 습관 나무를 완성해보세요!
+                    </p>
+
+                    <button id="saveHabitBtn" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 text-xs rounded-xl shadow-md transition active:scale-95">
+                        습관 시작하기
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Custom Message Modal / Toast System -->
+        <div id="toastMessage" class="fixed bottom-16 left-1/2 -translate-x-1/2 bg-gray-900/90 text-white text-xs px-4 py-2.5 rounded-full shadow-lg z-50 transition-opacity duration-300 opacity-0 pointer-events-none flex items-center space-x-2">
+            <span id="toastIcon">✨</span>
+            <span id="toastText">메시지가 들어갑니다.</span>
+        </div>
+
+    </div>
+
+    <script>
+        // Monthly Supporting Characters Data
+        const MONTHLY_CHARACTERS = [
+            { month: 1, name: "용기 토끼 베니", avatar: "🐰", quote: "새해 첫 단추야! 시작이 반이니 넌 이미 절반이나 이룬 거야!" },
+            { month: 2, name: "열정 병아리 피피", avatar: "🐥", quote: "작은 날갯짓이라도 괜찮아! 꾸준히 하다 보면 높이 날 수 있어!" },
+            { month: 3, name: "희망 다람쥐 람이", avatar: "🐿️", quote: "봄날의 도토리처럼 차곡차곡 쌓은 노력이 곧 커다란 나무가 될 거야!" },
+            { month: 4, name: "꿈꾸는 고양이 야옹이", avatar: "🐱", quote: "너의 가능성은 무한해! 따뜻한 햇살 아래 너의 꿈을 펼쳐봐!" },
+            { month: 5, name: "화이팅 강아지 멍뭉이", avatar: "🐶", quote: "언제나 너의 든든한 페이스메이커가 되어줄게! 오늘도 파이팅!" },
+            { month: 6, name: "밝은 사슴 로니", avatar: "🦌", quote: "급할 필요 없어. 너만의 속도로 걸어가면 돼!" },
+            { month: 7, name: "지혜 부엉이 올리", avatar: "🦉", quote: "지칠 땐 잠시 쉬어가도 좋아. 넌 매일 조금씩 성장하고 있어!" },
+            { month: 8, name: "열정 사자 레오", avatar: "🦁", quote: "당당하게 전진해! 너는 할 수 있다는 걸 내가 알고 있어!" },
+            { month: 9, name: "친절 코알라 코코", avatar: "🐨", quote: "너의 진심 어린 노력은 절대 배신하지 않아." },
+            { month: 10, name: "응원 요정 여우 루키", avatar: "🦊", quote: "오늘 작은 한 걸음이 내일의 커다란 꿈을 완성해! 꿈을 향해 달려봐!" },
+            { month: 11, name: "따뜻한 곰돌이 포포", avatar: "🐻", quote: "추운 바람이 불어도 네 마음속 열정은 언제나 따뜻해!" },
+            { month: 12, name: "성공 산타 루돌프", avatar: "🦌", quote: "올 한 해 최고였어! 마지막까지 멋지게 꿈을 완성해보자!" }
+        ];
+
+        // Tree Stages Logic
+        const TREE_STAGES = [
+            { level: 1, name: "단계 1: 작은 씨앗", icon: "🌱", reqExp: 0 },
+            { level: 2, name: "단계 2: 귀여운 새싹", icon: "🌿", reqExp: 50 },
+            { level: 3, name: "단계 3: 파릇파릇 묘목", icon: "🪴", reqExp: 150 },
+            { level: 4, name: "단계 4: 무럭무럭 나무", icon: "🌳", reqExp: 400 },
+            { level: 5, name: "단계 5: 결실을 맺은 희망나무", icon: "🌲✨", reqExp: 1000 }
+        ];
+
+        // Idle Helpers (Farmers/Automation)
+        const FARMER_HELPERS = [
+            { id: 'waterCan', name: '자동 분무기', icon: '🚿', cost: 30, cps: 1, expRate: 0.2, level: 0 },
+            { id: 'juniorFarmer', name: '꼬마 정원사', icon: '👦', cost: 100, cps: 4, expRate: 0.5, level: 0 },
+            { id: 'proFarmer', name: '전문 농부', icon: '👨‍🌾', cost: 300, cps: 12, expRate: 1.5, level: 0 },
+            { id: 'drone', name: '스프링클러 드론', icon: '🚁', cost: 800, cps: 35, expRate: 4.0, level: 0 }
+        ];
+
+        // Expanded Rich Background Themes Shop
+        const BACKGROUND_THEMES = [
+            { id: 'bg-theme-field', name: '🌱 푸른 새싹 들판', cost: 0, unlocked: true, class: 'bg-theme-field', type: 'bird' },
+            { id: 'bg-theme-ocean', name: '🌊 신비로운 바다언덕', cost: 100, unlocked: false, class: 'bg-theme-ocean', type: 'ocean' },
+            { id: 'bg-theme-sakura', name: '🌸 흩날리는 벚꽃길', cost: 200, unlocked: false, class: 'bg-theme-sakura', type: 'sakura' },
+            { id: 'bg-theme-sunset', name: '🌅 노을빛 낭만정원', cost: 250, unlocked: false, class: 'bg-theme-sunset', type: 'bird' },
+            { id: 'bg-theme-forest', name: '🌲 깊은 울창한 숲', cost: 350, unlocked: false, class: 'bg-theme-forest', type: 'firefly' },
+            { id: 'bg-theme-night', name: '🌙 별빛 반짝이는 밤', cost: 450, unlocked: false, class: 'bg-theme-night', type: 'star' },
+            { id: 'bg-theme-galaxy', name: '🌌 꿈꾸는 은하수', cost: 600, unlocked: false, class: 'bg-theme-galaxy', type: 'star' },
+            { id: 'bg-theme-aurora', name: '🌌 신비로운 오로라', cost: 800, unlocked: false, class: 'bg-theme-aurora', type: 'star' }
+        ];
+
+        // Global State
+        let state = {
+            coins: 120, // Starting coins
+            treeExp: 0,
+            activeThemeClass: 'bg-theme-field',
+            previewThemeId: null,
+            habit: null,
+            currentViewDate: new Date(),
+            selectedDateKey: formatDateKey(new Date()), // Currently selected date in calendar
+            helpers: JSON.parse(JSON.stringify(FARMER_HELPERS)),
+            themes: JSON.parse(JSON.stringify(BACKGROUND_THEMES))
+        };
+
+        // Toast Notification System
+        function showToast(message, icon = "✨") {
+            const toast = document.getElementById("toastMessage");
+            const toastText = document.getElementById("toastText");
+            const toastIcon = document.getElementById("toastIcon");
+
+            toastText.textContent = message;
+            toastIcon.textContent = icon;
+
+            toast.classList.remove("opacity-0", "pointer-events-none");
+            toast.classList.add("opacity-100");
+
+            setTimeout(() => {
+                toast.classList.remove("opacity-100");
+                toast.classList.add("opacity-0", "pointer-events-none");
+            }, 2200);
+        }
+
+        // Format Date YYYY-MM-DD
+        function formatDateKey(date) {
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+
+        // Calculate Rates
+        function getTotalCPS() {
+            return state.helpers.reduce((sum, h) => sum + (h.level * h.cps), 0);
+        }
+
+        function getTotalExpRate() {
+            return state.helpers.reduce((sum, h) => sum + (h.level * h.expRate), 0);
+        }
+
+        function renderMonthlyCharacter(month) {
+            const charData = MONTHLY_CHARACTERS.find(c => c.month === month) || MONTHLY_CHARACTERS[9];
+            document.getElementById("charAvatar").textContent = charData.avatar;
+            document.getElementById("charName").textContent = charData.name;
+            document.getElementById("currentMonthText").textContent = `${month}월의 응원`;
+            document.getElementById("charQuote").textContent = `"${charData.quote}"`;
+        }
+
+        function generateTaskDescription(habitTitle, dayIndex) {
+            const templates = [
+                `${dayIndex + 1}일차: ${habitTitle} 5분 가볍게 실천하기`,
+                `${dayIndex + 1}일차: ${habitTitle} 집중해서 도전해보기`,
+                `${dayIndex + 1}일차: ${habitTitle} 루틴을 즐겁게 마무리하기`,
+                `${dayIndex + 1}일차: ${habitTitle} 성취감을 느끼며 달성하기`,
+                `${dayIndex + 1}일차: ${habitTitle} 자신감을 가지고 이뤄내기`
+            ];
+            return templates[dayIndex % templates.length];
+        }
+
+        function renderSelectedDateTask() {
+            const todayKey = formatDateKey(new Date());
+            const selectedKey = state.selectedDateKey || todayKey;
+
+            const noHabitNotice = document.getElementById("noHabitNotice");
+            const todayTaskContainer = document.getElementById("todayTaskContainer");
+            const todayDateText = document.getElementById("todayDateText");
+            const headerTitle = document.getElementById("selectedTaskHeaderTitle");
+            const pulseDot = document.getElementById("selectedDatePulse");
+
+            const dateParts = selectedKey.split("-");
+            const displayMonth = parseInt(dateParts[1], 10);
+            const displayDay = parseInt(dateParts[2], 10);
+
+            const isToday = (selectedKey === todayKey);
+
+            todayDateText.textContent = `${displayMonth}월 ${displayDay}일`;
+            if (isToday) {
+                headerTitle.textContent = "오늘의 할 일";
+                pulseDot.classList.remove("hidden");
+            } else {
+                headerTitle.textContent = `${displayMonth}월 ${displayDay}일 기록`;
+                pulseDot.classList.add("hidden");
+            }
+
+            if (!state.habit) {
+                noHabitNotice.classList.remove("hidden");
+                todayTaskContainer.classList.add("hidden");
+                return;
+            }
+
+            noHabitNotice.classList.add("hidden");
+            todayTaskContainer.classList.remove("hidden");
+
+            const startDateParts = state.habit.startDate.split("-");
+            const startDate = new Date(startDateParts[0], startDateParts[1] - 1, startDateParts[2]);
+            const selectedDate = new Date(dateParts[0], dateParts[1] - 1, dateParts[2]);
+
+            const diffTime = selectedDate.getTime() - startDate.getTime();
+            const dayDiff = Math.floor(diffTime / (1000 * 3600 * 24));
+
+            document.getElementById("taskHabitName").textContent = state.habit.title;
+            const completeBtn = document.getElementById("completeTaskBtn");
+
+            const isCompleted = state.habit.completedDays.includes(selectedKey);
+
+            if (selectedDate < startDate) {
+                document.getElementById("taskDescription").textContent = "습관 시작 전 날짜입니다.";
+                completeBtn.disabled = true;
+                completeBtn.className = "bg-gray-200 text-gray-400 font-bold text-xs px-3 py-2 rounded-xl cursor-not-allowed";
+                completeBtn.innerHTML = `<span>시작 전</span>`;
+            } else if (isCompleted) {
+                document.getElementById("taskDescription").textContent = isToday 
+                    ? "오늘의 습관 미션을 완료했습니다! 👏" 
+                    : "해당 날짜의 습관 미션을 멋지게 완수했습니다! 👏";
+                completeBtn.disabled = true;
+                completeBtn.className = "bg-emerald-100 text-emerald-700 font-bold text-xs px-3 py-2 rounded-xl cursor-default flex items-center space-x-1";
+                completeBtn.innerHTML = `<i class="fa-solid fa-check-double text-emerald-600"></i> <span>달성 완료</span>`;
+            } else {
+                const currentDayIndex = Math.max(0, dayDiff);
+                document.getElementById("taskDescription").textContent = generateTaskDescription(state.habit.title, currentDayIndex);
+
+                if (isToday) {
+                    completeBtn.disabled = false;
+                    completeBtn.className = "bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-xs px-4 py-2.5 rounded-xl shadow-md transition active:scale-95 flex items-center space-x-1";
+                    completeBtn.innerHTML = `<i class="fa-solid fa-check"></i> <span>완료</span>`;
+                } else if (selectedDate > new Date()) {
+                    completeBtn.disabled = true;
+                    completeBtn.className = "bg-gray-200 text-gray-400 font-bold text-xs px-3 py-2 rounded-xl cursor-not-allowed";
+                    completeBtn.innerHTML = `<span>미래의 할 일</span>`;
+                } else {
+                    completeBtn.disabled = true;
+                    completeBtn.className = "bg-rose-50 text-rose-400 border border-rose-200 font-bold text-xs px-3 py-2 rounded-xl cursor-not-allowed";
+                    completeBtn.innerHTML = `<i class="fa-solid fa-xmark"></i> <span>미달성</span>`;
+                }
+            }
+        }
+
+        function renderCalendar() {
+            const year = state.currentViewDate.getFullYear();
+            const month = state.currentViewDate.getMonth();
+
+            document.getElementById("calendarMonthYear").textContent = `${year}년 ${month + 1}월`;
+            renderMonthlyCharacter(month + 1);
+
+            const firstDay = new Date(year, month, 1);
+            const lastDay = new Date(year, month + 1, 0);
+            const startingDay = firstDay.getDay();
+            const totalDays = lastDay.getDate();
+
+            const calendarGrid = document.getElementById("calendarDaysGrid");
+            calendarGrid.innerHTML = "";
+
+            for (let i = 0; i < startingDay; i++) {
+                const emptyCell = document.createElement("div");
+                emptyCell.className = "h-9";
+                calendarGrid.appendChild(emptyCell);
+            }
+
+            const todayKey = formatDateKey(new Date());
+
+            for (let day = 1; day <= totalDays; day++) {
+                const dayDate = new Date(year, month, day);
+                const dateKey = formatDateKey(dayDate);
+
+                const dayCell = document.createElement("div");
+                dayCell.className = "h-9 rounded-xl flex flex-col items-center justify-center relative font-medium transition cursor-pointer select-none";
+
+                const isToday = dateKey === todayKey;
+                const isSelected = dateKey === state.selectedDateKey;
+                const isCompleted = state.habit && state.habit.completedDays.includes(dateKey);
+
+                if (isSelected) {
+                    dayCell.className += " ring-2 ring-emerald-500 ring-offset-1 font-bold z-10 scale-105 shadow-sm";
+                }
+
+                if (isCompleted) {
+                    dayCell.className += " bg-emerald-100 text-emerald-800 border border-emerald-300";
+                    dayCell.innerHTML = `<span class="text-[10px]">${day}</span><i class="fa-solid fa-seedling text-emerald-600 text-[10px] -mt-0.5"></i>`;
+                } else if (isToday) {
+                    dayCell.className += " bg-emerald-600 text-white font-bold shadow-md";
+                    dayCell.innerHTML = `<span>${day}</span>`;
+                } else {
+                    dayCell.className += " hover:bg-gray-100 text-gray-700 bg-gray-50/50";
+                    dayCell.innerHTML = `<span>${day}</span>`;
+                }
+
+                dayCell.onclick = () => {
+                    state.selectedDateKey = dateKey;
+                    renderCalendar();
+                    renderSelectedDateTask();
+                };
+
+                calendarGrid.appendChild(dayCell);
+            }
+        }
+
+        function renderFarmersList() {
+            const container = document.getElementById("farmersPanel");
+            container.innerHTML = "";
+
+            state.helpers.forEach(helper => {
+                const card = document.createElement("div");
+                const canAfford = state.coins >= helper.cost;
+                card.className = "p-3 rounded-2xl bg-white border border-gray-100 shadow-sm flex items-center justify-between";
+
+                card.innerHTML = `
+                    <div class="flex items-center space-x-3">
+                        <div class="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center text-xl">
+                            ${helper.icon}
+                        </div>
+                        <div>
+                            <div class="flex items-center space-x-1.5">
+                                <span class="font-bold text-xs text-gray-800">${helper.name}</span>
+                                <span class="text-[10px] bg-emerald-100 text-emerald-700 px-1.5 py-0.2 rounded-md font-bold">Lv.${helper.level}</span>
+                            </div>
+                            <p class="text-[10px] text-gray-400 mt-0.5">+${helper.cps} 🪙/초 | +${helper.expRate} EXP/초</p>
+                        </div>
+                    </div>
+                    <button class="buy-helper-btn ${canAfford ? 'bg-amber-500 hover:bg-amber-600 text-white' : 'bg-gray-200 text-gray-400 cursor-not-allowed'} px-3 py-1.5 rounded-xl font-bold text-xs shadow-sm transition active:scale-95" data-id="${helper.id}">
+                        ${helper.cost} 🪙
+                    </button>
+                `;
+
+                container.appendChild(card);
+            });
+
+            // Bind click listener explicitly
+            document.querySelectorAll(".buy-helper-btn").forEach(btn => {
+                btn.onclick = (e) => {
+                    e.stopPropagation();
+                    const helperId = e.currentTarget.getAttribute("data-id");
+                    buyHelper(helperId);
+                };
+            });
+        }
+
+        function buyHelper(id) {
+            const helper = state.helpers.find(h => h.id === id);
+            if (!helper) return;
+
+            if (state.coins >= helper.cost) {
+                state.coins -= helper.cost;
+                helper.level += 1;
+                helper.cost = Math.floor(helper.cost * 1.5);
+                showToast(`${helper.name} 고용 완료! (Lv.${helper.level})`, "👨‍🌾");
+                renderGardenUI();
+            } else {
+                showToast("코인이 부족합니다! 미션을 달성하거나 나무를 직접 터치해보세요.", "💡");
+            }
+        }
+
+        function renderGardenUI() {
+            let currentStage = TREE_STAGES[0];
+            let nextStage = TREE_STAGES[TREE_STAGES.length - 1];
+
+            for (let i = TREE_STAGES.length - 1; i >= 0; i--) {
+                if (state.treeExp >= TREE_STAGES[i].reqExp) {
+                    currentStage = TREE_STAGES[i];
+                    nextStage = TREE_STAGES[Math.min(i + 1, TREE_STAGES.length - 1)];
+                    break;
+                }
+            }
+
+            document.getElementById("treeIconDisplay").textContent = currentStage.icon;
+            document.getElementById("treeStageLabel").textContent = currentStage.name;
+
+            const maxExp = TREE_STAGES[TREE_STAGES.length - 1].reqExp;
+            const progressPct = Math.min(100, Math.round((state.treeExp / maxExp) * 100));
+            
+            document.getElementById("gardenProgressBar").style.width = `${progressPct}%`;
+            document.getElementById("treeExpText").textContent = `${Math.floor(state.treeExp)} / ${nextStage.reqExp} EXP`;
+
+            if (progressPct >= 100) {
+                document.getElementById("gardenStatusMessage").textContent = "🎉 축하합니다! 완벽한 습관 나무가 완성되었습니다!";
+            } else {
+                document.getElementById("gardenStatusMessage").textContent = `다음 단계까지 남은 EXP: ${Math.ceil(nextStage.reqExp - state.treeExp)}`;
+            }
+
+            document.getElementById("userCoins").textContent = Math.floor(state.coins);
+            document.getElementById("cpsRateText").textContent = `(+${getTotalCPS()}/초)`;
+
+            updateCanvasThemeVisual();
+            renderFarmersList();
+            renderThemesList();
+        }
+
+        function updateCanvasThemeVisual() {
+            const gardenCanvasArea = document.getElementById("gardenCanvasArea");
+            const themeAnimDecor = document.getElementById("themeAnimDecor");
+            const previewBanner = document.getElementById("previewBanner");
+
+            const targetThemeId = state.previewThemeId || state.themes.find(t => t.class === state.activeThemeClass)?.id || 'bg-theme-field';
+            const themeObj = state.themes.find(t => t.id === targetThemeId);
+
+            if (!themeObj) return;
+
+            state.themes.forEach(t => gardenCanvasArea.classList.remove(t.class));
+            gardenCanvasArea.classList.add(themeObj.class);
+
+            if (state.previewThemeId) {
+                previewBanner.classList.remove("hidden");
+                document.getElementById("previewNameText").textContent = `'${themeObj.name}' 미리보기 중`;
+            } else {
+                previewBanner.classList.add("hidden");
+            }
+
+            themeAnimDecor.innerHTML = "";
+
+            if (themeObj.type === 'bird') {
+                themeAnimDecor.innerHTML = `
+                    <div class="anim-bird-1 absolute top-8 text-lg opacity-80">🕊️</div>
+                    <div class="anim-bird-2 absolute top-14 text-sm opacity-70">🦅</div>
+                `;
+            } else if (themeObj.type === 'ocean') {
+                themeAnimDecor.innerHTML = `
+                    <div class="anim-bird-1 absolute top-6 text-sm opacity-90">🕊️</div>
+                    <div class="absolute bottom-0 left-0 right-0 h-16 bg-white/20 backdrop-blur-xs rounded-b-3xl flex items-end justify-around pb-1 text-2xl anim-wave">
+                        <span>🌊</span><span>⛵</span><span>🐬</span><span>🌊</span>
+                    </div>
+                `;
+            } else if (themeObj.type === 'sakura') {
+                let petalsHTML = '';
+                for (let i = 0; i < 8; i++) {
+                    const left = Math.random() * 90;
+                    const delay = Math.random() * 5;
+                    const duration = 4 + Math.random() * 4;
+                    petalsHTML += `<div class="anim-petal text-xs" style="left:${left}%; animation-delay:${delay}s; animation-duration:${duration}s;">🌸</div>`;
+                }
+                themeAnimDecor.innerHTML = petalsHTML;
+            } else if (themeObj.type === 'star') {
+                themeAnimDecor.innerHTML = `
+                    <div class="absolute top-3 left-10 text-xs animate-ping">✨</div>
+                    <div class="absolute top-10 right-12 text-sm animate-pulse">🌟</div>
+                    <div class="absolute top-20 left-1/3 text-xs animate-ping">✨</div>
+                `;
+            } else if (themeObj.type === 'firefly') {
+                themeAnimDecor.innerHTML = `
+                    <div class="absolute top-12 left-8 text-xs animate-pulse text-amber-300">💡</div>
+                    <div class="absolute top-24 right-10 text-xs animate-pulse text-amber-200">✨</div>
+                    <div class="absolute bottom-20 left-1/2 text-xs animate-pulse text-amber-300">💡</div>
+                `;
+            }
+        }
+
+        function renderThemesList() {
+            const container = document.getElementById("themesPanel");
+            container.innerHTML = "";
+
+            state.themes.forEach(theme => {
+                const card = document.createElement("div");
+                const isApplied = state.activeThemeClass === theme.class && !state.previewThemeId;
+                const isPreviewing = state.previewThemeId === theme.id;
+
+                card.className = `p-3 rounded-2xl border flex flex-col justify-between min-h-[100px] relative overflow-hidden transition ${theme.class} ${isApplied ? 'ring-2 ring-emerald-500 border-transparent shadow-md' : 'border-gray-200'}`;
+
+                let actionArea = "";
+
+                if (isApplied) {
+                    actionArea = `<span class="bg-emerald-600 text-white text-[10px] px-2.5 py-0.5 rounded-full font-bold">적용 중</span>`;
+                } else if (theme.unlocked) {
+                    actionArea = `
+                        <div class="flex space-x-1">
+                            <button class="preview-theme-btn bg-white/80 text-gray-800 text-[10px] px-2 py-0.5 rounded-full font-bold shadow-sm hover:bg-white active:scale-95" data-id="${theme.id}">
+                                ${isPreviewing ? '체험 중' : '👁️ 체험'}
+                            </button>
+                            <button class="apply-theme-btn bg-emerald-600 text-white text-[10px] px-2.5 py-0.5 rounded-full font-bold shadow-sm hover:bg-emerald-700 active:scale-95" data-id="${theme.id}">
+                                적용
+                            </button>
+                        </div>
+                    `;
+                } else {
+                    const canAfford = state.coins >= theme.cost;
+                    actionArea = `
+                        <div class="flex space-x-1">
+                            <button class="preview-theme-btn bg-white/80 text-gray-800 text-[10px] px-2 py-0.5 rounded-full font-bold shadow-sm hover:bg-white active:scale-95" data-id="${theme.id}">
+                                ${isPreviewing ? '체험 중' : '👁️ 체험'}
+                            </button>
+                            <button class="buy-theme-btn ${canAfford ? 'bg-amber-500 hover:bg-amber-600 text-white' : 'bg-gray-300 text-gray-500 cursor-not-allowed'} text-[10px] px-2.5 py-0.5 rounded-full font-bold shadow-sm active:scale-95" data-id="${theme.id}">
+                                ${theme.cost} 🪙
+                            </button>
+                        </div>
+                    `;
+                }
+
+                card.innerHTML = `
+                    <div class="flex justify-between items-start">
+                        <span class="font-bold text-xs ${theme.class.includes('night') || theme.class.includes('galaxy') || theme.class.includes('forest') || theme.class.includes('aurora') || theme.class.includes('ocean') ? 'text-white' : 'text-gray-800'}">${theme.name}</span>
+                        ${isPreviewing ? '<span class="bg-amber-400 text-amber-950 text-[9px] font-bold px-1.5 py-0.2 rounded preview-badge">체험 중</span>' : ''}
+                    </div>
+                    <div class="flex justify-end mt-3">
+                        ${actionArea}
+                    </div>
+                `;
+
+                container.appendChild(card);
+            });
+
+            // Bind explicitly
+            document.querySelectorAll(".preview-theme-btn").forEach(btn => {
+                btn.onclick = (e) => {
+                    e.stopPropagation();
+                    const id = e.currentTarget.getAttribute("data-id");
+                    previewTheme(id);
+                };
+            });
+
+            document.querySelectorAll(".buy-theme-btn").forEach(btn => {
+                btn.onclick = (e) => {
+                    e.stopPropagation();
+                    const id = e.currentTarget.getAttribute("data-id");
+                    buyTheme(id);
+                };
+            });
+
+            document.querySelectorAll(".apply-theme-btn").forEach(btn => {
+                btn.onclick = (e) => {
+                    e.stopPropagation();
+                    const id = e.currentTarget.getAttribute("data-id");
+                    applyTheme(id);
+                };
+            });
+        }
+
+        function previewTheme(id) {
+            const theme = state.themes.find(t => t.id === id);
+            if (!theme) return;
+
+            state.previewThemeId = id;
+            showToast(`'${theme.name}' 배경을 체험 모드로 적용했습니다!`, "👁️");
+            renderGardenUI();
+        }
+
+        function cancelPreview() {
+            state.previewThemeId = null;
+            showToast("배경 체험을 종료했습니다.", "✨");
+            renderGardenUI();
+        }
+
+        function buyTheme(id) {
+            const theme = state.themes.find(t => t.id === id);
+            if (!theme) return;
+
+            if (state.coins >= theme.cost) {
+                state.coins -= theme.cost;
+                theme.unlocked = true;
+                state.previewThemeId = null;
+                applyTheme(id);
+                showToast(`${theme.name} 배경 해금 및 적용 완료!`, "🎉");
+            } else {
+                showToast("코인이 부족합니다! 미션을 성공하거나 나무를 터치해보세요.", "💡");
+            }
+        }
+
+        function applyTheme(id) {
+            const theme = state.themes.find(t => t.id === id);
+            if (!theme || !theme.unlocked) return;
+
+            state.previewThemeId = null;
+            state.activeThemeClass = theme.class;
+
+            renderGardenUI();
+        }
+
+        function spawnClickPop(x, y, text) {
+            const pop = document.createElement("div");
+            pop.className = "click-pop";
+            pop.style.left = `${x}px`;
+            pop.style.top = `${y}px`;
+            pop.textContent = text;
+            document.body.appendChild(pop);
+
+            setTimeout(() => {
+                pop.remove();
+            }, 800);
+        }
+
+        function handleTreeClick(e) {
+            state.coins += 1;
+            state.treeExp = Math.min(TREE_STAGES[TREE_STAGES.length - 1].reqExp, state.treeExp + 0.5);
+
+            const rect = e.currentTarget.getBoundingClientRect();
+            const clientX = e.clientX || (e.touches && e.touches[0] ? e.touches[0].clientX : rect.left + rect.width / 2);
+            const clientY = e.clientY || (e.touches && e.touches[0] ? e.touches[0].clientY : rect.top + rect.height / 2);
+
+            spawnClickPop(clientX, clientY, "+1 🪙");
+            renderGardenUI();
+        }
+
+        function startIdleLoop() {
+            setInterval(() => {
+                const cps = getTotalCPS();
+                const expRate = getTotalExpRate();
+
+                if (cps > 0 || expRate > 0) {
+                    state.coins += cps;
+                    state.treeExp = Math.min(TREE_STAGES[TREE_STAGES.length - 1].reqExp, state.treeExp + expRate);
+                    renderGardenUI();
+                }
+            }, 1000);
+        }
+
+        function initApp() {
+            // View Switching Tabs
+            const tabCalendarView = document.getElementById("tabCalendarView");
+            const tabGardenView = document.getElementById("tabGardenView");
+            const navCalendarBtn = document.getElementById("navCalendarBtn");
+            const navGardenBtn = document.getElementById("navGardenBtn");
+
+            function switchToCalendar() {
+                tabCalendarView.classList.remove("hidden");
+                tabCalendarView.classList.add("block");
+                tabGardenView.classList.add("hidden");
+                tabGardenView.classList.remove("flex");
+
+                navCalendarBtn.className = "flex flex-col items-center text-emerald-600 font-bold transition active:scale-95";
+                navGardenBtn.className = "flex flex-col items-center text-gray-400 font-medium hover:text-emerald-600 transition active:scale-95";
+            }
+
+            function switchToGarden() {
+                tabCalendarView.classList.add("hidden");
+                tabCalendarView.classList.remove("block");
+                tabGardenView.classList.remove("hidden");
+                tabGardenView.classList.add("flex");
+
+                navCalendarBtn.className = "flex flex-col items-center text-gray-400 font-medium hover:text-emerald-600 transition active:scale-95";
+                navGardenBtn.className = "flex flex-col items-center text-emerald-600 font-bold transition active:scale-95";
+                renderGardenUI();
+            }
+
+            navCalendarBtn.onclick = switchToCalendar;
+            navGardenBtn.onclick = switchToGarden;
+
+            // Header Logo click jumps to calendar
+            document.getElementById("appHeaderLogo").onclick = switchToCalendar;
+
+            // Sub Panels (Farmers vs Themes)
+            const farmersPanel = document.getElementById("farmersPanel");
+            const themesPanel = document.getElementById("themesPanel");
+            const showFarmersTabBtn = document.getElementById("showFarmersTabBtn");
+            const showThemesTabBtn = document.getElementById("showThemesTabBtn");
+
+            showFarmersTabBtn.onclick = () => {
+                farmersPanel.classList.remove("hidden");
+                themesPanel.classList.add("hidden");
+                showFarmersTabBtn.className = "flex-1 py-2 bg-emerald-600 text-white font-bold text-xs rounded-xl shadow-sm active:scale-95 transition";
+                showThemesTabBtn.className = "flex-1 py-2 bg-gray-100 text-gray-600 font-bold text-xs rounded-xl hover:bg-gray-200 active:scale-95 transition";
+            };
+
+            showThemesTabBtn.onclick = () => {
+                farmersPanel.classList.add("hidden");
+                themesPanel.classList.remove("hidden");
+                showThemesTabBtn.className = "flex-1 py-2 bg-emerald-600 text-white font-bold text-xs rounded-xl shadow-sm active:scale-95 transition";
+                showFarmersTabBtn.className = "flex-1 py-2 bg-gray-100 text-gray-600 font-bold text-xs rounded-xl hover:bg-gray-200 active:scale-95 transition";
+            };
+
+            // Tree Interactive Click
+            const treeArea = document.getElementById("gardenCanvasArea");
+            treeArea.onclick = handleTreeClick;
+
+            // Preview Banner Buttons
+            document.getElementById("cancelPreviewBtn").onclick = (e) => {
+                e.stopPropagation();
+                cancelPreview();
+            };
+
+            document.getElementById("buyFromPreviewBtn").onclick = (e) => {
+                e.stopPropagation();
+                if (state.previewThemeId) {
+                    buyTheme(state.previewThemeId);
+                }
+            };
+
+            // Habit Creation Modal
+            const habitModal = document.getElementById("habitModal");
+            document.getElementById("openHabitModalBtn").onclick = () => habitModal.classList.remove("hidden");
+            document.getElementById("closeHabitModalBtn").onclick = () => habitModal.classList.add("hidden");
+
+            document.getElementById("saveHabitBtn").onclick = () => {
+                const title = document.getElementById("habitTitleInput").value.trim();
+                const duration = parseInt(document.getElementById("habitDurationInput").value, 10);
+
+                if (!title) {
+                    showToast("습관 이름을 입력해주세요!", "⚠️");
+                    return;
+                }
+
+                state.habit = {
+                    title: title,
+                    duration: duration,
+                    startDate: formatDateKey(new Date()),
+                    completedDays: []
+                };
+
+                habitModal.classList.add("hidden");
+                document.getElementById("habitTitleInput").value = "";
+                showToast(`'${title}' 습관이 설정되었습니다!`, "🌱");
+
+                renderSelectedDateTask();
+                renderCalendar();
+            };
+
+            // Complete Task Button
+            document.getElementById("completeTaskBtn").onclick = () => {
+                if (!state.habit) return;
+
+                const todayKey = formatDateKey(new Date());
+                if (state.selectedDateKey !== todayKey) {
+                    showToast("오늘 날짜의 미션만 수행할 수 있습니다!", "📅");
+                    return;
+                }
+
+                if (!state.habit.completedDays.includes(todayKey)) {
+                    state.habit.completedDays.push(todayKey);
+                    state.coins += 25;
+                    state.treeExp += 15;
+
+                    showToast("오늘의 미션 완료! +25 🪙 & +15 EXP 획득!", "🎉");
+
+                    renderSelectedDateTask();
+                    renderCalendar();
+                    renderGardenUI();
+                }
+            };
+
+            // Calendar Prev/Next Month
+            document.getElementById("prevMonthBtn").onclick = () => {
+                state.currentViewDate.setMonth(state.currentViewDate.getMonth() - 1);
+                renderCalendar();
+            };
+
+            document.getElementById("nextMonthBtn").onclick = () => {
+                state.currentViewDate.setMonth(state.currentViewDate.getMonth() + 1);
+                renderCalendar();
+            };
+
+            // Initial Render & Start Loops
+            renderCalendar();
+            renderSelectedDateTask();
+            renderGardenUI();
+            startIdleLoop();
+        }
+
+        window.addEventListener("DOMContentLoaded", initApp);
+    </script>
+</body>
+</html>
